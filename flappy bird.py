@@ -29,10 +29,11 @@ pygame.display.set_icon(gameIcon)
 # bird = pygame.transform.scale(bird, (60, 60))
 
 smallText = pygame.font.Font('freesansbold.ttf',15)
+mediumText = pygame.font.Font('freesansbold.ttf',55)
 largeText = pygame.font.Font('freesansbold.ttf',105)
 
 def fly(x,y,color = blue):
-    #gameDisplay.blit(bird,(x,y))
+    # gameDisplay.blit(bird,(x,y))
     pygame.draw.rect(gameDisplay,color,[x,y,bird_size,bird_size])
 
 def scr(score):
@@ -41,10 +42,35 @@ def scr(score):
 
 def start():
     print('game starts here')
+    gameDisplay.fill(bgcolor)
+    text = mediumText.render("FLAPPY BIRD", True, black)
+    text2 = smallText.render('by SHUBHI PAUL',True,black)
+    text3 = smallText.render("W / SPACEBAR OR UP ARROW TO JUMP",True,red)
+    text4 = smallText.render("P TO PAUSE / RESUME",True,red)
+    gameDisplay.blit(text,(200,250))
+    gameDisplay.blit(text2,(450,310))
+    gameDisplay.blit(text3,(200,350))
+    gameDisplay.blit(text4,(200,380))
+    pygame.display.update()
+    pygame.time.delay(5000)
     
+def paused(pause):
+    while pause:
+        text = largeText.render("PAUSED",True,red)
+        gameDisplay.blit(text,(200,250))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    pause = False
+    return 0
+
 
 def pillar_generator():
-    upper_pillar = 200 + random.randint(-150,150)
+    upper_pillar = 200 + random.randint(-170,170)
     lower_pillar = upper_pillar + pillar_gap
     return upper_pillar, lower_pillar
 
@@ -57,7 +83,7 @@ def pillar_disp(pillars,x=200):
 
 def gameLoop():
     start()
-    global upper_pillar, lower_pillar
+    global upper_pillar, lower_pillar,pause
     pillars = []
     
     reduce = 0
@@ -73,6 +99,7 @@ def gameLoop():
     pillar_velocity = -100
     pillar_count = 1
     collide = 0
+    pause = 0
     gameExit = False
     while not gameExit:
         for event in pygame.event.get():
@@ -81,15 +108,18 @@ def gameLoop():
                 quit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE or event.key == pygame.K_w or event.key == pygame.K_UP :
                     velocity = jumpVelocity
+                if event.key == pygame.K_p:
+                    print("we pause")
+                    pause = 1
+                    pause = paused(pause)
 
         gameDisplay.fill(bgcolor)
     
         if len(pillars) < 3:
             upper_pillar, lower_pillar = pillar_generator()
             pillars.append([upper_pillar,lower_pillar])
-            print(pillars)
 
         # bird auto fall
         if bird_position_y >= -20 and bird_position_y <= display_height - bird_size:
@@ -131,20 +161,16 @@ def gameLoop():
         # touch bottom
         if bird_position_y>540 or collide == 1:
             text = largeText.render("GAME OVER",True,black)
-            gameDisplay.blit(text,(70,200))
             fly(bird_position_x,bird_position_y,red)
+            gameDisplay.blit(text,(70,200))
             pygame.display.update()
             pygame.time.delay(3000)
             gameLoop()
 
         # collide
-        
         if bird_position_x + bird_size >= pillar_position_x and bird_position_x <= pillar_position_x + pillar_width:
             if bird_position_y <= pillars[0][0] or bird_position_y + bird_size >= pillars[0][1]:
                 collide = 1
-                print("we collide")
-                print("bird_position_y : ",bird_position_y)
-                print(pillars[0][0],pillars[0][1])
                     
         pygame.display.update()
         clock.tick(frameRate)
