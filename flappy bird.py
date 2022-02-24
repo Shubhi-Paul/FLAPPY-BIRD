@@ -7,7 +7,7 @@ display_width = 800
 display_height = 600
 player_size = 60
 pillar_width = 60
-pillar_gap = 120
+pillar_gap = 200
 
 clock = pygame.time.Clock()
 
@@ -43,34 +43,34 @@ def start():
     print('game starts here')
 
 def pillar_generator():
-    upper_pillar = 200 + random.randint(-150,280)
+    upper_pillar = 200 + random.randint(-150,150)
     lower_pillar = upper_pillar + pillar_gap
     return upper_pillar, lower_pillar
 
-upper_pillar, lower_pillar = pillar_generator()
-
-def pillar(x=200):
-    pygame.draw.rect(gameDisplay,green,[x,0,pillar_width,upper_pillar])
-    pygame.draw.rect(gameDisplay,green,[x,lower_pillar,pillar_width,display_height - lower_pillar])
+def pillar_disp(pillars,x=200):
+    j = 0
+    for i in pillars:
+        pygame.draw.rect(gameDisplay,green,[x+j*310,0,pillar_width,i[0]])
+        pygame.draw.rect(gameDisplay,green,[x+j*310,i[1],pillar_width,display_height - i[1]])
+        j += 1
 
 def gameLoop():
     start()
-
     global upper_pillar, lower_pillar
-
+    pillars = []
+    
     reduce = 0
     frameRate = 60
     score = 0
     dodged = 0
     bird_position_x = 200
     bird_position_y = 200
-    velocity = 0
+    velocity = 0 
     jumpVelocity = -250
-    gravity = 1000
-    time_elapsed = 0
-    pillar_position_x = display_width + 100
+    gravity = 0 #1000
+    pillar_position_x = display_width 
     pillar_velocity = -100
-
+    pillar_count = 1
     gameExit = False
     while not gameExit:
         for event in pygame.event.get():
@@ -84,22 +84,35 @@ def gameLoop():
 
         gameDisplay.fill(bgcolor)
     
-        #bird auto fall
+        if len(pillars) < 3:
+            upper_pillar, lower_pillar = pillar_generator()
+            pillars.append([upper_pillar,lower_pillar])
+            # print(pillars)
+
+        # bird auto fall
         if bird_position_y >= -20 and bird_position_y <= display_height - player_size:
             bird_position_y += velocity*(1/frameRate)
             velocity += gravity*(1/frameRate)
-
+        
+        # pillar velocity increase
+        pillar_velocity -= dodged/frameRate
         # reduce 1 point on touching top
         if 0 > bird_position_y :
             bird_position_y = 0
             pygame.draw.rect(gameDisplay,red,[0,0,display_width,3])
             if score > 0 and reduce == 0:
-                score -= 1      
+                score -= 1
+                dodged += 1      
             reduce = 1
         else:
             reduce = 0 
 
-        # scoring
+        #removing 1st pillarr when it reaches end
+        if pillar_position_x < -50:
+            pillars.pop(0)
+            pillar_position_x += 310*pillar_count
+
+        # scoring 
         if bird_position_x > pillar_position_x:
             if increase == 0:
                 score +=1
@@ -108,15 +121,8 @@ def gameLoop():
         else:
             increase = 0 
 
-        # pillar scroll
-        time_elapsed += 1/frameRate
-        if time_elapsed > (display_width + 4*pillar_width) / -pillar_velocity:
-            time_elapsed = 0
-            pillar_position_x = display_width + 100
-            upper_pillar, lower_pillar = pillar_generator()
-
-        pillar_position_x += (pillar_velocity - dodged) * (1/frameRate)
-        pillar(pillar_position_x)
+        pillar_position_x += (pillar_velocity - 4*dodged) * (1/frameRate)
+        pillar_disp(pillars,pillar_position_x)
         scr(score)
         fly(bird_position_x,bird_position_y)
 
