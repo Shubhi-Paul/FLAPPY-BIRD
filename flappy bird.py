@@ -5,7 +5,7 @@ pygame.init()
 
 display_width = 800
 display_height = 600
-player_size = 60
+bird_size = 60
 pillar_width = 60
 pillar_gap = 200
 
@@ -33,7 +33,7 @@ largeText = pygame.font.Font('freesansbold.ttf',105)
 
 def fly(x,y,color = blue):
     #gameDisplay.blit(bird,(x,y))
-    pygame.draw.rect(gameDisplay,color,[x,y,player_size,player_size])
+    pygame.draw.rect(gameDisplay,color,[x,y,bird_size,bird_size])
 
 def scr(score):
     text = smallText.render("SCORE: "+str(score), True, black)
@@ -41,6 +41,7 @@ def scr(score):
 
 def start():
     print('game starts here')
+    
 
 def pillar_generator():
     upper_pillar = 200 + random.randint(-150,150)
@@ -67,10 +68,11 @@ def gameLoop():
     bird_position_y = 200
     velocity = 0 
     jumpVelocity = -250
-    gravity = 0 #1000
+    gravity = 1000
     pillar_position_x = display_width 
     pillar_velocity = -100
     pillar_count = 1
+    collide = 0
     gameExit = False
     while not gameExit:
         for event in pygame.event.get():
@@ -87,10 +89,10 @@ def gameLoop():
         if len(pillars) < 3:
             upper_pillar, lower_pillar = pillar_generator()
             pillars.append([upper_pillar,lower_pillar])
-            # print(pillars)
+            print(pillars)
 
         # bird auto fall
-        if bird_position_y >= -20 and bird_position_y <= display_height - player_size:
+        if bird_position_y >= -20 and bird_position_y <= display_height - bird_size:
             bird_position_y += velocity*(1/frameRate)
             velocity += gravity*(1/frameRate)
         
@@ -126,8 +128,8 @@ def gameLoop():
         scr(score)
         fly(bird_position_x,bird_position_y)
 
-        #touch bottom
-        if bird_position_y>540:
+        # touch bottom
+        if bird_position_y>540 or collide == 1:
             text = largeText.render("GAME OVER",True,black)
             gameDisplay.blit(text,(70,200))
             fly(bird_position_x,bird_position_y,red)
@@ -135,6 +137,15 @@ def gameLoop():
             pygame.time.delay(3000)
             gameLoop()
 
+        # collide
+        
+        if bird_position_x + bird_size >= pillar_position_x and bird_position_x <= pillar_position_x + pillar_width:
+            if bird_position_y <= pillars[0][0] or bird_position_y + bird_size >= pillars[0][1]:
+                collide = 1
+                print("we collide")
+                print("bird_position_y : ",bird_position_y)
+                print(pillars[0][0],pillars[0][1])
+                    
         pygame.display.update()
         clock.tick(frameRate)
 
